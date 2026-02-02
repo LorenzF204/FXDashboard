@@ -68,9 +68,14 @@ def load_growth(IP):
 def load_fx_prices(Pairs):
     prices = {}
     for c, t in Pairs.items():
-        df=yf.download(t + "=X", START_DATE)
-        prices[c]=df['Adj Close']
-    return pd.DataFrame(prices)
+        ticker = t if t.endswith("=X") or t.endswith(".NYB") else f"{t}=X"
+        df = yf.download(ticker, start=START_DATE)
+        if df.empty or "Adj Close" not in df:
+            continue
+        prices[c] = df["Adj Close"]
+    if not prices:
+        return pd.DataFrame()
+    return pd.concat(prices, axis=1)
 
 #VIX laden
 def load_risk():
