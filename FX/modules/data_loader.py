@@ -65,7 +65,7 @@ def load_growth(IP):
 
 #FX-Daten laden
 
-def load_fx_data(Pairs):
+def load_fx_prices(Pairs):
     prices = {}
     for c, t in Pairs.items():
         df=yf.download(t + "=X", START_DATE)
