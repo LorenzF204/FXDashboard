@@ -69,16 +69,34 @@ def load_fx_prices(Pairs):
     prices = {}
     for c, t in Pairs.items():
         ticker = t if t.endswith("=X") or t.endswith(".NYB") else f"{t}=X"
-        df = yf.download(ticker, start=START_DATE)
-        if df.empty or "Adj Close" not in df:
+        df = yf.download(ticker, start=START_DATE, progress=False)
+        if df.empty:
             continue
-        prices[c] = df["Adj Close"]
+        
+        # Handle MultiIndex columns in newer yfinance versions
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.get_level_values(0)
+            
+        col = "Adj Close" if "Adj Close" in df.columns else "Close"
+        if col not in df.columns:
+            continue
+            
+        prices[c] = df[col]
     if not prices:
         return pd.DataFrame()
     return pd.concat(prices, axis=1)
 
 #VIX laden
 def load_risk():
-    vix = yf.download("^VIX", start=START_DATE)["Adj Close"]
+    df = yf.download("^VIX", start=START_DATE, progress=False)
+    if df.empty:
+        return pd.Series(name="VIX")
+        
+    # Handle MultiIndex columns in newer yfinance versions
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+        
+    col = "Adj Close" if "Adj Close" in df.columns else "Close"
+    vix = df[col]
     vix.name = "VIX"
     return vix
